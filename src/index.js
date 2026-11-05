@@ -16,8 +16,7 @@ export default {
     try {
       key = decodeURIComponent(url.pathname).slice(1);
     } catch {
-      // Not valid UTF-8: the old Apache host linked a few files whose names were
-      // stored in Windows-1250. Their keys are UTF-8 now, so redirect old links.
+      // Not valid UTF-8: try the path as Windows-1250 and redirect to the UTF-8 key.
       const legacy = decodeWindows1250(url.pathname);
       if (legacy === null || (await env.BUCKET.head(legacy.slice(1))) === null) return notFound();
       return Response.redirect(url.origin + encodePath(legacy) + url.search, 301);
@@ -40,7 +39,7 @@ async function file(env, key, url, request) {
   }
 
   if (object === null) {
-    // "dir" without trailing slash -> redirect like Apache's mod_dir.
+    // Folder without trailing slash -> redirect to the slash version.
     const probe = await env.BUCKET.list({ prefix: key + "/", limit: 1 });
     if (probe.objects.length || probe.delimitedPrefixes.length) {
       return Response.redirect(url.origin + url.pathname + "/" + url.search, 301);
@@ -57,8 +56,7 @@ async function file(env, key, url, request) {
   headers.set("X-Content-Type-Options", "nosniff");
   if (!headers.has("Content-Type")) headers.set("Content-Type", "application/octet-stream");
   // rclone labels text uploads "charset=utf-8", but many old files are Windows-1250 or
-  // ISO-8859-1. Like the old Apache host, send no charset, so browsers use the file's
-  // own <meta charset> or detect it.
+  // ISO-8859-1. Send no charset, so browsers use the file's own <meta charset> or detect it.
   headers.set("Content-Type", headers.get("Content-Type").replace(/;\s*charset=utf-8\s*$/i, ""));
 
   // Preconditions failed: R2 returns metadata without a body.
@@ -191,7 +189,7 @@ function encodePath(name) {
   return name.split("/").map(encodeURIComponent).join("/");
 }
 
-// Same format and timezone as the old Apache listing: "2023-11-25 15:38", Prague time.
+// Listing date format: "2023-11-25 15:38", Prague time.
 const DATE_FORMAT = new Intl.DateTimeFormat("en-CA", {
   timeZone: "Europe/Prague",
   year: "numeric",

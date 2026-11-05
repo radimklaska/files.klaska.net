@@ -2,15 +2,16 @@
 
 **https://files.klaska.net/** is a plain directory listing of old study materials (mostly ČVUT, 2008–2014), about 4 GB.
 
-It used to be an Apache `Options +Indexes` site on Active24/Websupport hosting. It now runs on Cloudflare:
+It runs on Cloudflare:
 
-- **R2 bucket `files-klaska-net`** holds the files. Each object key is the URL path without the leading slash (`cvut/numerika/num metody/po_ada_1.pdf`), so every old URL still works.
+- **R2 bucket `files-klaska-net`** holds the files. Each object key is the URL path without the leading slash, for example `cvut/numerika/num metody/po_ada_1.pdf`.
 - **Worker `files-klaska-net`** (`src/index.js`) serves the bucket on the `files.klaska.net` custom domain:
-  - A path ending in `/` gets an Apache-style "Index of …" page, built live from the bucket listing.
+  - A path ending in `/` gets an "Index of …" page, built live from the bucket listing. Dates are shown in Prague time, and query strings are ignored.
   - Any other path is streamed from R2, with `Range`, `ETag`/`If-None-Match` and `HEAD` support.
-  - A folder path without the trailing slash gets a 301 redirect to the slash version, as Apache's `mod_dir` did.
-  - One old file had a Windows-1250 (non-UTF-8) name. Its key is now UTF-8, and old percent-encoded links to it are 301-redirected.
-  - "Last modified" shows the original file mtime, which rclone stores as `mtime` metadata.
+  - A folder path without the trailing slash gets a 301 redirect to the slash version.
+  - A URL that isn't valid UTF-8 is decoded as Windows-1250 and 301-redirected to the UTF-8 key, if that key exists.
+  - Text files are sent without a charset, because several are Windows-1250 or ISO-8859-1. Browsers then use the file's own `<meta charset>` or detect it.
+  - "Last modified" shows the file's original mtime, which rclone stores as `mtime` metadata.
 
 The data itself is **not** in this repository. Locally it lives in `data/`, which is gitignored.
 
@@ -26,7 +27,7 @@ Everything fits in the free tier: R2 gives 10 GB storage, 1M writes and 10M read
 
 Nothing has to be redeployed. Listings are built live, so a new file shows up right away (listing pages are cached for up to 5 minutes, files for 1 day).
 
-`sync.sh` is a `rclone sync`: **`data/` is the source of truth, and objects missing from `data/` are deleted from the bucket.** You can also upload single files in the Cloudflare dashboard (R2 → `files-klaska-net` → Upload). If you do, copy them into `data/` too, or the next sync deletes them.
+`sync.sh` is a `rclone sync`: **`data/` is the source of truth, and objects missing from `data/` are deleted from the bucket.** `.htaccess` files are never uploaded. You can also upload single files in the Cloudflare dashboard (R2 → `files-klaska-net` → Upload). If you do, copy them into `data/` too, or the next sync deletes them.
 
 `sync.sh` reads these from `~/.env`:
 
@@ -57,16 +58,6 @@ python3 -I scripts/verify.py https://files.klaska.net/          # HEAD: sizes
 python3 -I scripts/verify.py https://files.klaska.net/ --get    # GET: MD5 of every body (downloads ~4 GB)
 ```
 
-`scripts/manifest.py <base-url>` crawls any Apache-style or Worker listing and prints `path<TAB>size` for each file. It's useful for comparing two hosts.
+Cloudflare compresses text responses and drops `Content-Length`, so for those files `verify.py` compares MD5 instead. It also ignores the `beacon.min.js` tag that Cloudflare Web Analytics, a zone setting, adds to HTML responses.
 
-## Migration log (2026-11-05)
-
-- Source: the Active24/Websupport shell account, web root `~/files.klaska.net/web/`. That hosting is scheduled for decommissioning on 2026-11-25. Copied with `rsync -a` (this keeps mtimes) into `data/`.
-- Not migrated:
-  - `.htaccess` files. They only set `Options +Indexes` and `IndexOptions -FancyIndexing`. Apache never served them, and the Worker's listing covers both.
-  - Apache's sort links (`?C=M;O=A`) and the `/eikonostasi/` icons. Query strings are ignored, so old sort links still show the listing.
-- The redirect `sites/files.klaska.net/files/manual_files/* → /*` existed only in an old local copy, not on the live host, so it was dropped.
-- Deliberately removed: `cvut/prostweb/` (old school web projects; Apache served their `index.html` for the folder URL, which the Worker does not) and `cvut/java/Adresar/` (a Java project with a bundled MySQL connector). That leaves 2,420 files, 4.0 GiB. Re-running the rsync from the old host would bring them back.
-- Text files keep their original encodings (several are Windows-1250 or ISO-8859-1). The Worker drops the `charset=utf-8` that rclone adds, so browsers use the file's own `<meta charset>` or detect it, as they did on Apache.
-- Cloudflare Web Analytics, a zone setting, adds a `beacon.min.js` tag to HTML responses. `verify.py` ignores it.
-- DNS for `klaska.net` was already on Cloudflare. The cutover replaced the proxied A record for `files.klaska.net` with the Worker custom domain. After the cutover, `verify.py` confirmed that all 2,420 files are served byte-identical.
+`scripts/manifest.py <base-url>` crawls a directory listing and prints `path<TAB>size` for each file.
