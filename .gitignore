@@ -1,0 +1,6 @@
+data/
+node_modules/
+.wrangler/
+.remember/
+wget.log
+.dev.vars

@@ -1,0 +1,13 @@
+{
+  "name": "files-klaska-net",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "sync": "scripts/sync.sh",
+    "verify": "python3 -I scripts/verify.py https://files.klaska.net/"
+  },
+  "devDependencies": {
+    "wrangler": "4.158.0"
+  }
+}
