@@ -56,6 +56,10 @@ async function file(env, key, url, request) {
   headers.set("Cache-Control", FILE_CACHE);
   headers.set("X-Content-Type-Options", "nosniff");
   if (!headers.has("Content-Type")) headers.set("Content-Type", "application/octet-stream");
+  // rclone labels text uploads "charset=utf-8", but many old files are Windows-1250 or
+  // ISO-8859-1. Like the old Apache host, send no charset, so browsers use the file's
+  // own <meta charset> or detect it.
+  headers.set("Content-Type", headers.get("Content-Type").replace(/;\s*charset=utf-8\s*$/i, ""));
 
   // Preconditions failed: R2 returns metadata without a body.
   if (!("body" in object)) {

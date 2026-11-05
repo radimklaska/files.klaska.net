@@ -66,4 +66,7 @@ python3 -I scripts/verify.py https://files.klaska.net/ --get    # GET: MD5 of ev
   - `.htaccess` files. They only set `Options +Indexes` and `IndexOptions -FancyIndexing`. Apache never served them, and the Worker's listing covers both.
   - Apache's sort links (`?C=M;O=A`) and the `/eikonostasi/` icons. Query strings are ignored, so old sort links still show the listing.
 - The redirect `sites/files.klaska.net/files/manual_files/* → /*` existed only in an old local copy, not on the live host, so it was dropped.
-- DNS for `klaska.net` was already on Cloudflare. The cutover replaced the proxied A record for `files.klaska.net` with the Worker custom domain.
+- Deliberately removed: `cvut/prostweb/` (old school web projects; Apache served their `index.html` for the folder URL, which the Worker does not) and `cvut/java/Adresar/` (a Java project with a bundled MySQL connector). That leaves 2,420 files, 4.0 GiB. Re-running the rsync from the old host would bring them back.
+- Text files keep their original encodings (several are Windows-1250 or ISO-8859-1). The Worker drops the `charset=utf-8` that rclone adds, so browsers use the file's own `<meta charset>` or detect it, as they did on Apache.
+- Cloudflare Web Analytics, a zone setting, adds a `beacon.min.js` tag to HTML responses. `verify.py` ignores it.
+- DNS for `klaska.net` was already on Cloudflare. The cutover replaced the proxied A record for `files.klaska.net` with the Worker custom domain. After the cutover, `verify.py` confirmed that all 2,420 files are served byte-identical.
