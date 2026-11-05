@@ -61,7 +61,7 @@ python3 -I scripts/verify.py https://files.klaska.net/ --get    # GET: MD5 of ev
 
 ## Migration log (2026-11-05)
 
-- Source: the Active24/Websupport shell account, web root `~/files.klaska.net/web/`. Copied with `rsync -a` (this keeps mtimes) into `data/`.
+- Source: the Active24/Websupport shell account, web root `~/files.klaska.net/web/`. That hosting is scheduled for decommissioning on 2026-11-25. Copied with `rsync -a` (this keeps mtimes) into `data/`.
 - Not migrated:
   - `.htaccess` files. They only set `Options +Indexes` and `IndexOptions -FancyIndexing`. Apache never served them, and the Worker's listing covers both.
   - Apache's sort links (`?C=M;O=A`) and the `/eikonostasi/` icons. Query strings are ignored, so old sort links still show the listing.
