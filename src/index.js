@@ -187,9 +187,20 @@ function encodePath(name) {
   return name.split("/").map(encodeURIComponent).join("/");
 }
 
+// Same format and timezone as the old Apache listing: "2023-11-25 15:38", Prague time.
+const DATE_FORMAT = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Europe/Prague",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
 function formatDate(d) {
-  const p = (n) => String(n).padStart(2, "0");
-  return `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}`;
+  const p = Object.fromEntries(DATE_FORMAT.formatToParts(d).map((x) => [x.type, x.value]));
+  return `${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute}`;
 }
 
 function formatSize(bytes) {
