@@ -9,4 +9,9 @@ export RCLONE_CONFIG_R2_TYPE=s3 RCLONE_CONFIG_R2_PROVIDER=Cloudflare RCLONE_CONF
 export RCLONE_CONFIG_R2_ACCESS_KEY_ID="$R2_ACCESS_KEY_ID" RCLONE_CONFIG_R2_SECRET_ACCESS_KEY="$R2_SECRET_ACCESS_KEY"
 export RCLONE_CONFIG_R2_ENDPOINT="https://${CF_ACCOUNT_ID}.r2.cloudflarestorage.com"
 # rclone sync deletes bucket objects that are not in ./data — that is intended (./data is the source of truth).
-exec rclone sync data/ r2:files-klaska-net --exclude ".htaccess" --checksum --transfers 8 --progress "$@"
+# Never uploaded: hidden files and folders (.htaccess, .git, .env, ...) and thumbnail caches.
+# verify.py skips the same names. An excluded file that is already in the bucket stays there
+# until you run this once with --delete-excluded.
+exec rclone sync data/ r2:files-klaska-net \
+  --exclude ".*" --exclude ".*/**" --exclude "Thumbs.db" --exclude "hpothb*" \
+  --checksum --transfers 8 --progress "$@"

@@ -9,9 +9,11 @@ base = sys.argv[1].rstrip("/")
 full = "--get" in sys.argv
 root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data")
 paths = []
-for d, _, files in os.walk(root):
+for d, dirs, files in os.walk(root):
+    # Same names sync.sh never uploads: hidden files and folders, thumbnail caches.
+    dirs[:] = [x for x in dirs if not x.startswith(".")]
     for f in files:
-        if f == ".htaccess":
+        if f.startswith(".") or f == "Thumbs.db" or f.startswith("hpothb"):
             continue
         rel = os.path.relpath(os.path.join(d, f), root)
         paths.append(rel)

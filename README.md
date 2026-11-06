@@ -27,7 +27,7 @@ Everything fits in the free tier: R2 gives 10 GB storage, 1M writes and 10M read
 
 Nothing has to be redeployed. Listings are built live, so a new file shows up right away (listing pages are cached for up to 5 minutes, files for 1 day).
 
-`sync.sh` is a `rclone sync`: **`data/` is the source of truth, and objects missing from `data/` are deleted from the bucket.** `.htaccess` files are never uploaded. You can also upload single files in the Cloudflare dashboard (R2 → `files-klaska-net` → Upload). If you do, copy them into `data/` too, or the next sync deletes them.
+`sync.sh` is a `rclone sync`: **`data/` is the source of truth, and objects missing from `data/` are deleted from the bucket.** Hidden files and folders (any name starting with a dot, such as `.htaccess` or `.git`) and thumbnail caches (`Thumbs.db`, `hpothb*`) are never uploaded. You can also upload single files in the Cloudflare dashboard (R2 → `files-klaska-net` → Upload). If you do, copy them into `data/` too, or the next sync deletes them.
 
 `sync.sh` reads these from `~/.env`:
 
